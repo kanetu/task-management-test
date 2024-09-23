@@ -1,27 +1,9 @@
 import express from "express";
 import { ObjectId } from "mongodb";
+import { buildTaskHierarchy } from '../utils'
+import { Task } from "../interfaces";
 
 const router = express.Router();
-
-interface Task {
-  _id: ObjectId,
-  title: string,
-  complete: boolean,
-  desc: string,
-  children?: Task[],
-  parentId?: ObjectId
-}
-function nestChildren(task: Task, allTasks: Task[]) {
-  const children = allTasks.filter(child => child.parentId?.toString() === task._id.toString());
-  task.children = children.map(child => nestChildren(child, allTasks));
-  return task;
-}
-
-function buildTaskHierarchy(tasks:Task[]) {
-  return tasks.filter(task => task.parentId === null)  // Get root tasks
-              .map(task => nestChildren(task, tasks));  // Recursively nest children
-}
-
 
 router.get("/", async (req, res) => {
   const { dbClient } = req;
@@ -63,7 +45,7 @@ router.get("/:id", async (req, res) => {
     await dbClient.close();
   }
 
-  if(!result){
+  if (!result) {
     return res.status(404).json({
       message: "Task not found"
     })
@@ -82,7 +64,7 @@ router.post("/", async (req, res) => {
     const task = {
       title: body.title,
       desc: body.desc,
-      parentId: body.parentId ?  new ObjectId(body.parentId) : null,
+      parentId: body.parentId ? new ObjectId(body.parentId) : null,
       complete: false
     };
     const db = dbClient.db("task-management");
@@ -115,7 +97,7 @@ router.patch("/:id", async (req, res) => {
     const task = {
       title: body.title,
       desc: body.desc,
-      parentId: body.parentId ?  new ObjectId(body.parentId) : null,
+      parentId: body.parentId ? new ObjectId(body.parentId) : null,
     };
 
     await db
@@ -149,7 +131,7 @@ router.patch("/complete/:id", async (req, res) => {
     const task = {
       title: body.title,
       desc: body.desc,
-      parentId: body.parentId ?  new ObjectId(body.parentId) : null,
+      parentId: body.parentId ? new ObjectId(body.parentId) : null,
       complete: body.complete
     };
 
@@ -168,7 +150,7 @@ router.patch("/complete/:id", async (req, res) => {
     ]).toArray();
 
     const unCompleteChildrenIndex = childTasks.findIndex(child => !child.complete);
-    if(unCompleteChildrenIndex > -1){
+    if (unCompleteChildrenIndex > -1) {
       return res.status(403).json({
         message: "Can not complete this task",
       });
@@ -216,13 +198,13 @@ router.delete("/:id", async (req, res) => {
       }
     ]).toArray();
 
-    if(childTasks.length > 0){
+    if (childTasks.length > 0) {
       return res.status(403).json({
         message: "Can not delete this task",
       });
     }
-    
-    await db.collection("tasks").findOneAndDelete({ _id: new ObjectId(id)})
+
+    await db.collection("tasks").findOneAndDelete({ _id: new ObjectId(id) })
   } catch (err) {
     console.error(err);
     return res.status(500).json({

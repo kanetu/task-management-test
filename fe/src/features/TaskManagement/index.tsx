@@ -1,14 +1,11 @@
-import { createContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Task } from "../../interfaces";
-import TaskCard from "./components/TaskCard";
-import TaskCardForm from "./components/TaskCardForm";
+import { tasksService } from '../../services';
+import AddNewTask from "./components/AddNewTask";
+import TaskList from "./components/TaskList";
+import { TaskListContext } from "./contexts/TaskListContext";
 
-export const TaskListContext = createContext({
-  refresh: () => {},
-});
-
-interface TaskManagementProps {}
-
+interface TaskManagementProps { }
 const TaskManagement: React.FC<TaskManagementProps> = () => {
   const [isAddNewTask, setIsAddNewTask] = useState(false);
   const [needRefresh, setNeedRefresh] = useState(false);
@@ -16,22 +13,10 @@ const TaskManagement: React.FC<TaskManagementProps> = () => {
 
   const getTasks = async () => {
     try {
-      const response = await fetch("http://localhost:3002/v1/tasks", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
-      }
-
-      // Parse and log the response JSON
-      const data = await response.json();
-      setTasks(data.data);
+      const data = await tasksService.getTasks();
+      setTasks(data.data)
     } catch (err) {
-      console.error(err);
+      console.error(err)
     }
   };
 
@@ -56,25 +41,12 @@ const TaskManagement: React.FC<TaskManagementProps> = () => {
 
   const handleAddNewTask = async (task: Task) => {
     try {
-      const response = await fetch("http://localhost:3002/v1/tasks", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(task),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
-      }
-
-      // Parse and log the response JSON
-      const data = await response.json();
-      console.log("Task added successfully:", data);
+      await tasksService.addTask(task);
       setNeedRefresh(true);
       setIsAddNewTask(false);
-    } catch (error) {
-      console.error("Error adding task:", error);
+
+    } catch (err) {
+      console.error(err)
     }
   };
 
@@ -83,32 +55,12 @@ const TaskManagement: React.FC<TaskManagementProps> = () => {
       <div style={{ width: "300px" }}>
         <h3>Task Management ({tasks.length})</h3>
         <button onClick={toggleAddNewTask}>Add New Taks</button>
-
-        {isAddNewTask ? (
-          <TaskCardForm
-            cardTitle="Add New Task"
-            task={{
-              title: "",
-              desc: "",
-              complete: false,
-            }}
-            onSubmit={handleAddNewTask}
-            onClose={toggleAddNewTask}
-          />
-        ) : null}
+        <AddNewTask isAddNewTask={isAddNewTask} onSubmit={handleAddNewTask} onClose={toggleAddNewTask} />
 
         <TaskListContext.Provider
           value={{ refresh: () => setNeedRefresh(true) }}
         >
-          <div>
-            {tasks.length > 0
-              ? tasks.map((task: any) => (
-                  <div key={task._id}>
-                    <TaskCard task={task} />
-                  </div>
-                ))
-              : null}
-          </div>
+          <TaskList tasks={tasks} />
         </TaskListContext.Provider>
       </div>
     </div>

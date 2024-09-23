@@ -1,8 +1,9 @@
 import { useContext, useMemo, useState } from "react";
-import { TaskListContext } from "..";
 import { Task } from "../../../interfaces";
-import TaskCard from "./TaskCard";
-import TaskCardForm from "./TaskCardForm";
+import { tasksService } from "../../../services";
+import { TaskListContext } from "../contexts/TaskListContext";
+import AddNewTask from "./AddNewTask";
+import TaskList from "./TaskList";
 
 interface TaskCardReadonlyProps {
   task: Task;
@@ -43,25 +44,7 @@ const TaskCardReadonly: React.FC<TaskCardReadonlyProps> = ({
 
   const handleAddNewChild = async (childTask: Task) => {
     try {
-      const childTaskWithParentId = {
-        ...childTask,
-        parentId: task._id,
-      };
-      const response = await fetch("http://localhost:3002/v1/tasks", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(childTaskWithParentId),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
-      }
-
-      // Parse and log the response JSON
-      const data = await response.json();
-      console.log("Task added successfully:", data);
+      await tasksService.addTaskChild(task._id!, childTask)
       setIsAddNewChild(false);
       refresh();
     } catch (error) {
@@ -114,24 +97,8 @@ const TaskCardReadonly: React.FC<TaskCardReadonlyProps> = ({
       <span>{task.desc}</span>
       <div className="child">
         {renderAddNewChild()}
-
-        {isAddNewChild ? (
-          <TaskCardForm
-            cardTitle="Add New Task"
-            task={{
-              title: "",
-              desc: "",
-              complete: false,
-            }}
-            onSubmit={handleAddNewChild}
-            onClose={toggleAddNewChild}
-          />
-        ) : null}
-        {task.children?.map((child) => (
-          <div key={child._id}>
-            <TaskCard task={child} />
-          </div>
-        ))}
+        <AddNewTask isAddNewTask={isAddNewChild} onSubmit={handleAddNewChild} onClose={toggleAddNewChild} />
+        <TaskList tasks={task.children || []} />
       </div>
     </div>
   );

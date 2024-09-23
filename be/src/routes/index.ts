@@ -2,8 +2,8 @@ import express from "express"
 import tasksRouter from "./tasks";
 const routes = express.Router()
 
-routes.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+routes.get('/', (req, res) => {
+  res.status(200).json('Express');
 });
 routes.use('/tasks', tasksRouter)
 

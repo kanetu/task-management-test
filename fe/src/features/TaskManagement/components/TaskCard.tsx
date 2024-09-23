@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
-import { TaskListContext } from "..";
 import { Task } from "../../../interfaces";
+import { tasksService } from "../../../services";
+import { TaskListContext } from "../contexts/TaskListContext";
 import TaskCardForm from "./TaskCardForm";
 import TaskCardReadonly from "./TaskCardReadonly";
 
@@ -17,45 +18,16 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
 
   const hanldeDelete = async (id: string) => {
     try {
-      const response = await fetch(`http://localhost:3002/v1/tasks/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
-      }
-
-      // Parse and log the response JSON
-      const data = await response.json();
+      await tasksService.deleteTask(id)
       refresh();
-      console.log("Task deleted successfully:", data);
-    } catch (error) {
-      console.error("Error delete task:", error);
+    } catch (err) {
+      console.error(err);
     }
   };
 
   const handleComplete = async (data: Task) => {
     try {
-      const response = await fetch(
-        `http://localhost:3002/v1/tasks/complete/${data._id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ...data,
-            complete: true,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
-      }
+      await tasksService.completeTask(data)
       refresh();
       setMode("read");
     } catch (err) {
@@ -69,20 +41,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
 
   const handleUpdate = async (data: Task) => {
     try {
-      const response = await fetch(
-        `http://localhost:3002/v1/tasks/${data._id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
-      }
+      await tasksService.updateTask(data)
       refresh();
       setMode("read");
     } catch (err) {

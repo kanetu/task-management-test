@@ -1,4 +1,4 @@
-import { app } from './app'
+import { app } from './src/app'
 
 /**
  * Port number for the server to listen on.
