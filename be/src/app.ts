@@ -6,12 +6,16 @@ import logger from "morgan"
 import cors from "cors";
 import routes from "./routes";
 import { MongoClient } from "mongodb";
+import "dotenv/config";
 
-const connectionString = "mongodb://localhost:27017/task-management";
-const client = new MongoClient(connectionString);
+const mgConnectionString = process.env.MONGODB_CONNECTION || "";
+
+if (!mgConnectionString){
+  console.log("[!IMPORTANT] Mongo Connection string is not configured")
+}
+const client = new MongoClient(mgConnectionString);
 
 const app = express();
-
 
 const corsOptions = {
   origin: "*",
